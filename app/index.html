@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="becity-token" content="">
+<title>BeCity</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%230a6cff'/%3E%3Cpath d='M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.js",
+  "three/addons/": "./vendor/three/",
+  "web-ifc": "./vendor/web-ifc/web-ifc-api.js",
+  "replicad": "./vendor/replicad/replicad.js",
+  "web-worker": "./vendor/verb/web-worker-stub.js"
+} }
+</script>
+</head>
+<body>
+<div id="boot" role="status" aria-live="polite"><div class="boot-card"><svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a6cff"/><path d="M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20" fill="#fff"/></svg><div class="boot-name">Be<b>City</b></div><div class="boot-sub">CAD · GIS · BIM · Presentazione · Normativa · Contabilità</div><div class="boot-bar"><i></i></div><div class="boot-msg" id="bootMsg">Avvio in corso…</div></div></div>
+<header class="topbar" id="topbar">
+  <a class="brand" href="#/home" aria-label="BeCity – home">
+    <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a6cff"/><path d="M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20" fill="#fff"/></svg>
+    <span class="brand-name">Be<b>City</b></span>
+  </a>
+  <nav class="mainnav" aria-label="Navigazione principale">
+    <a href="#/home" data-i18n="nav.apps">Applicazioni</a>
+    <a href="#/projects" data-i18n="nav.projects">Progetti</a>
+    <a href="#/resources" data-i18n="nav.resources">Risorse</a>
+    <a href="#/support" data-i18n="nav.support">Supporto</a>
+  </nav>
+  <div class="topbar-right">
+    <button class="tb-btn" id="searchBtn" aria-label="Cerca (Ctrl+K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+    <button class="tb-btn" id="langBtn" aria-label="Lingua"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg><span id="langLabel">IT</span></button>
+    <button class="tb-btn" id="notifBtn" aria-label="Notifiche"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="badge hidden" id="notifCount">0</span></button>
+    <button class="user-chip" id="userChip"></button>
+  </div>
+</header>
+<main id="view" tabindex="-1"></main>
+<div id="modalRoot"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="js/core.js"></script>
+<script src="js/store.js"></script>
+<script src="js/geom.js"></script>
+<script src="js/writers.js"></script>
+<script src="js/crs.js"></script>
+<script src="js/geoformats.js"></script>
+<script src="js/corpus.js"></script>
+<script src="js/home.js"></script>
+<script src="js/cad.js"></script>
+<script src="js/cad3d.js"></script>
+<script src="js/gis.js"></script>
+<script src="js/gis-ext.js"></script>
+<script src="js/terra.js"></script>
+<script src="js/norm.js"></script>
+<script src="js/gen.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/bim-loader.js"></script>
+<script src="js/present.js"></script>
+  <script src="js/acc-demo.js"></script>
+  <script src="js/acc.js"></script>
+<script src="js/admin.js"></script>
+<script>App.start().catch(function (e) { var m = document.getElementById("bootMsg"); if (m) m.textContent = "Errore di avvio: " + e.message; console.error(e); });</script>
+</body>
+</html>

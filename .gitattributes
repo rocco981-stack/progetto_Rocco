@@ -1,0 +1,7 @@
+*.exe binary
+*.wasm binary
+*.ico binary
+*.gpkg binary
+*.las binary
+*.tif binary
+*.zip binary

@@ -1,0 +1,96 @@
+BeCity 3.1 – CAD · BIM · GIS · Presentazione · Normativa · Contabilità
+======================================================================
+
+AVVIO (Windows)
+  1. Estrai lo ZIP in una cartella qualsiasi (es. Documenti\BeCity).
+     Non avviare BeCity.exe dall'interno dello ZIP.
+  2. Doppio clic su BeCity.exe.
+     Si apre una finestra dell'applicazione (Microsoft Edge o Chrome in
+     modalità app). Non serve Node.js, non serve installare nulla e non
+     c'è nessun login.
+  3. Per chiudere: menu utente in alto a destra → "Chiudi BeCity"
+     (oppure chiudi la finestra: il programma si ferma da solo dopo
+     circa un minuto).
+
+  La cartella "app" deve restare accanto a BeCity.exe.
+
+  BeCity.exe non è firmato digitalmente: al primo avvio Windows
+  SmartScreen può mostrare "Windows ha protetto il PC". Clicca
+  "Ulteriori informazioni" → "Esegui comunque".
+
+AVVIO (Linux)
+  chmod +x BeCity-linux && ./BeCity-linux
+
+AVVIO (macOS)
+  Doppio clic su avvia-mac.command (usa python3 di sistema).
+  In questa modalità la conversione DWG e PostGIS non sono disponibili:
+  usa DXF. Tutte le altre funzioni sono attive.
+
+OPZIONI DI BeCity.exe
+  --server     avvia solo il server (http://127.0.0.1:47800) senza aprire finestre
+  (se la porta 47800 è occupata usa automaticamente la successiva libera)
+
+DATI (archivio locale su disco)
+  Progetti, file allegati (IFC) e prezzari sono salvati su questo computer in
+      Documenti\BeCity\   (stato, progetti, file, prezzari)
+  senza il limite di circa 5 MB della memoria del browser: layer catastali,
+  rilievi, disegni DWG e prezzari regionali di grandi dimensioni vengono
+  conservati alla chiusura. A ogni salvataggio resta una copia .bak.
+  Modalità portatile: crea una cartella "dati" accanto a BeCity.exe.
+  Impostazioni → "Apri la cartella dei dati". Nessun dato viene inviato in
+  rete; l'archiviazione cloud arriverà in una versione successiva.
+  I dati della versione precedente (salvati nel browser) vengono trasferiti
+  automaticamente su disco al primo avvio.
+
+SICUREZZA
+  - BeCity.exe risponde solo a 127.0.0.1 (questo computer) e non apre porte
+    verso la rete; non richiede diritti di amministratore.
+  - L'interfaccia locale è protetta da un codice di sessione casuale, dal
+    controllo dell'host (contro il DNS rebinding) e dell'origine: le pagine di
+    altri siti aperte nel browser non possono leggere o modificare i dati.
+  - Le formule (computo, calcolatore di campi GIS) sono valutate da un
+    interprete sicuro: nessun codice viene eseguito.
+  - Il programma NON è firmato digitalmente: Windows SmartScreen può mostrare
+    "Windows ha protetto il PC" → "Ulteriori informazioni" → "Esegui comunque".
+    L'avviso sparisce solo firmando l'eseguibile con un certificato di firma
+    del codice. Per verificare l'integrità confronta l'impronta in SHA256.txt.
+
+HOME
+  Sei applicazioni. Pulsanti "Apri progetto" (scegli il progetto e l'applicazione) e
+  "Nuovo progetto".
+
+APPLICAZIONI
+  CAD           stile AutoCAD: barra multifunzione, riga di comando con alias,
+                OSNAP/ORTO/POLARE, layer, blocchi, retini, quote, layout.
+                DWG (R13–2018) letto e scritto direttamente da BeCity.exe
+                con la libreria open source acadrust: nessuna licenza esterna.
+  BIM           interfaccia stile Revit (barra di accesso rapido, scheda
+                contestuale verde, barra delle opzioni, Proprietà e Browser
+                di progetto, ViewCube, barra di controllo vista) con la
+                semplicità di SketchUp: livelli,
+                assi, muri, facciate continue, solai, coperture, porte,
+                finestre, scale, ringhiere, spingi/tira, abachi, IFC4,
+                solidi B-rep OpenCascade e STEP.
+  GIS           interfaccia stile ArcGIS Pro: barra multifunzione con scheda
+                contestuale "Layer feature", riquadro Contenuto, viste a
+                schede, Catalogo, Geoprocessing, tabella attributi, CRS italiani, Shapefile/GeoPackage/
+                GeoTIFF/PostGIS. Mappatura drone stile DJI Terra: piano di
+                volo (GSD, strisciate, KML), nuvole LAS, DSM/DTM, volumi
+                di scavo/riporto, profili, curve di livello.
+  Presentazione tavole in scala PDF/SVG/PNG, render, proposte.
+  Contabilità   interfaccia tipo software di computo: tutte le fasi dell'opera
+                (progetto, affidamento, consegna, esecuzione, ultimazione,
+                collaudo). Prezzari regionali: scarica il file ufficiale
+                (CSV, XLSX, DCF, XML SIX, XPWE, anche in ZIP) e importalo da
+                Prezzari regionali; è incluso un prezzario DIMOSTRATIVO con
+                valori indicativi, non ufficiali. Elenco prezzi e analisi
+                nuovi prezzi, computo metrico estimativo, manodopera,
+                sicurezza, quadro economico (D.Lgs. 36/2023, All. I.7),
+                capitolato speciale (bozza), cronoprogramma, giornale dei
+                lavori, ordini di servizio, verbali, libretto delle misure,
+                registro, SAL e certificati di pagamento, stato finale.
+                Quantità importabili e aggiornabili da BIM, CAD e GIS;
+                scambio computi in formato XPWE. Stampe PDF e DOCX.
+  Normativa     assistente con fonti, titolo edilizio, conformità, pratiche.
+
+Componenti open source e licenze: vedi TERZE_PARTI.txt e app/licenses.

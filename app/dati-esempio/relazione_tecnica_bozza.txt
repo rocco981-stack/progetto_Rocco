@@ -1,0 +1,7 @@
+RELAZIONE TECNICA ASSEVERATA (bozza dimostrativa)
+Progetto: {{progetto}} – Comune di {{comune}}
+Committente: {{committente}}
+Superficie utile: {{sup_utile}} mq – Volume: {{volume}} mc
+Rapporto aeroilluminante minimo: {{rai_min}}
+Il progetto rispetta il D.Lgs. 50/2016 e le NTC 2008.
+Firma:

@@ -1,0 +1,18 @@
+BeCity include i seguenti componenti open source, non modificati.
+I testi completi delle licenze sono in app/licenses/.
+
+Nel programma BeCity.exe / BeCity-linux (Rust):
+  acadrust 0.6.8        MPL-2.0            lettura/scrittura DWG e DXF   https://github.com/hakanaktt/acadrust
+  tiny_http 0.12        MIT / Apache-2.0   server HTTP locale            https://github.com/tiny-http/tiny-http
+  postgres 0.19         MIT / Apache-2.0   connessione PostGIS           https://github.com/sfackler/rust-postgres
+  (il codice sorgente di acadrust è disponibile all'indirizzo indicato, come richiesto dalla MPL-2.0)
+
+Nell'interfaccia (app/vendor):
+  three.js 0.170              MIT          visualizzazione 3D
+  web-ifc 0.0.80              MPL-2.0      lettura/verifica IFC
+  replicad 1.2.1              MIT          modellazione B-rep
+  replicad-opencascadejs      LGPL-2.1     kernel OpenCascade (WebAssembly)
+  manifold-3d 3.0.1           Apache-2.0   booleane su mesh
+  verb-nurbs 3.0.3            MIT          curve NURBS
+  sql.js 1.12                 MIT          SQLite per GeoPackage
+  geotiff.js 2.1.3            MIT          GeoTIFF / COG
