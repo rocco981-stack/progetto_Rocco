@@ -1,0 +1,38 @@
+{
+  "name": "BeCity – CAD · GIS · BIM · Contabilità",
+  "short_name": "BeCity",
+  "id": "./",
+  "start_url": "./index.html#/home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f9",
+  "theme_color": "#000000",
+  "lang": "it",
+  "description": "Piattaforma per architettura, urbanistica e territorio: CAD, GIS, BIM, Presentazione, Normativa e Contabilità. Funziona anche senza connessione.",
+  "categories": [
+    "productivity",
+    "business",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
