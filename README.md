@@ -9,8 +9,13 @@ Funziona sul proprio computer, senza installazione, senza Node.js e senza login.
 2. Doppio clic su **`BeCity.exe`** (la cartella `app` deve restare accanto all'eseguibile).
 3. Si apre la finestra di BeCity in Microsoft Edge o Chrome in modalità applicazione.
 
-L'eseguibile non è firmato digitalmente: al primo avvio Windows SmartScreen può mostrare
-“Windows ha protetto il PC” → “Ulteriori informazioni” → “Esegui comunque”. Le impronte SHA-256 sono in `SHA256.txt`.
+### Avviso “PC protetto da Windows”
+
+Windows SmartScreen lo mostra per ogni programma scaricato da internet **non firmato digitalmente**: non indica un virus.
+
+- **Per avviarlo subito**: prima di estrarre, tasto destro sullo ZIP → *Proprietà* → spunta **Annulla blocco** → *OK*, poi estrai. In alternativa, sull'avviso: *Ulteriori informazioni* → *Esegui comunque*.
+- **Per verificare che sia autentico**: in PowerShell `Get-FileHash .\BeCity.exe` e confronta con `SHA256.txt`.
+- **Soluzione definitiva**: il workflow [`BeCity per Windows`](.github/workflows/windows.yml) compila l'eseguibile su Windows e lo **firma automaticamente** quando nei segreti del repository è configurato un certificato (Azure Trusted Signing oppure certificato di firma del codice `.pfx`). Con un tag `v*` pubblica lo ZIP firmato come release.
 
 Se l'avvio non riesce compare un riquadro con i dettagli e la **modalità sicura**; il registro è in `Documenti\BeCity\becity.log`. Per finestre nere o vuote (driver grafici) avvia `BeCity.exe --compat`.
 

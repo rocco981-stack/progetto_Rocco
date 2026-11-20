@@ -1,0 +1,91 @@
+# Compilazione ufficiale di BeCity.exe su Windows (toolchain Microsoft) con firma digitale facoltativa.
+# La firma si attiva aggiungendo i segreti del repository (Settings → Secrets and variables → Actions):
+#   Azure Trusted Signing: AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET,
+#                          TS_ENDPOINT, TS_ACCOUNT, TS_PROFILE
+#   oppure certificato .pfx: WINDOWS_PFX_BASE64 (file .pfx in base64), WINDOWS_PFX_PASSWORD
+name: BeCity per Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      HAS_AZURE: ${{ secrets.AZURE_CLIENT_ID != '' }}
+      HAS_PFX: ${{ secrets.WINDOWS_PFX_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain Rust
+        run: rustup default stable
+
+      - name: Compila BeCity.exe
+        working-directory: launcher
+        run: cargo build --release --locked
+
+      - name: Prepara la cartella BeCity
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/BeCity | Out-Null
+          Copy-Item launcher/target/release/BeCity.exe dist/BeCity/
+          Copy-Item -Recurse app dist/BeCity/app
+          Copy-Item LEGGIMI.txt, TERZE_PARTI.txt, avvia-mac.command, BeCity-linux dist/BeCity/
+
+      - name: Firma con Azure Trusted Signing
+        if: env.HAS_AZURE == 'true'
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.TS_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.TS_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.TS_PROFILE }}
+          files-folder: dist/BeCity
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Firma con certificato .pfx
+        if: env.HAS_PFX == 'true' && env.HAS_AZURE != 'true'
+        shell: pwsh
+        env:
+          PFX_B64: ${{ secrets.WINDOWS_PFX_BASE64 }}
+          PFX_PWD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP 'firma.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:PFX_B64))
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName sign /f $pfx /p $env:PFX_PWD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /d "BeCity" dist/BeCity/BeCity.exe
+          Remove-Item $pfx
+
+      - name: Verifica firma e impronte
+        shell: pwsh
+        run: |
+          $s = Get-AuthenticodeSignature dist/BeCity/BeCity.exe
+          Write-Host "Firma: $($s.Status) $($s.SignerCertificate.Subject)"
+          Get-FileHash dist/BeCity/BeCity.exe, dist/BeCity/BeCity-linux -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist/BeCity/SHA256.txt
+          Get-Content dist/BeCity/SHA256.txt
+
+      - name: Crea lo ZIP
+        shell: pwsh
+        run: Compress-Archive -Path dist/BeCity -DestinationPath BeCity-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BeCity-windows
+          path: BeCity-windows.zip
+
+      - name: Pubblica la release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: BeCity-windows.zip

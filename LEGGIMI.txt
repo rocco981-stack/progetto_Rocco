@@ -14,26 +14,33 @@ AVVIO (Windows)
 
   La cartella "app" deve restare accanto a BeCity.exe.
 
-  BeCity.exe non è firmato digitalmente: al primo avvio Windows
-  SmartScreen può mostrare "Windows ha protetto il PC". Clicca
-  "Ulteriori informazioni" → "Esegui comunque".
+  Al primo avvio Windows può mostrare "PC protetto da Windows": vedi la
+  sezione AVVISO "PC PROTETTO DA WINDOWS" più sotto.
 
-SE L'AVVIO NON RIESCE
-  - All'avvio compare una schermata chiara con il logo e lo stato del
-    caricamento. Se qualcosa non va, compare un riquadro "Avvio non riuscito"
-    con i dettagli e i pulsanti: Riprova · Avvia in modalità sicura (dati
-    dimostrativi, i progetti su disco non vengono toccati) · Apri la cartella
-    dei dati · Copia i dettagli (da inviare all'assistenza).
-  - I file di progetto danneggiati vengono ripristinati automaticamente dalla
-    copia .bak; un progetto illeggibile viene escluso senza bloccare l'avvio.
-  - Registro degli eventi: Documenti\BeCity\becity.log
-  - Finestra nera o vuota (driver grafici): crea un collegamento a BeCity.exe
-    e aggiungi " --compat" in fondo al campo Destinazione (disattiva
-    l'accelerazione grafica della finestra).
-  - Se una versione precedente di BeCity è ancora aperta, la nuova versione
-    si avvia comunque su una porta diversa: chiudi la vecchia finestra.
-  - Se la cartella "app" manca accanto a BeCity.exe (ad esempio avvio
-    dall'interno dello ZIP) compare un messaggio di Windows che lo spiega.
+AVVISO "PC PROTETTO DA WINDOWS" (SmartScreen)
+  Non è un'infezione né un errore di BeCity: Windows mostra questo avviso per
+  ogni programma scaricato da internet che non è firmato digitalmente e non è
+  ancora diffuso ("app non riconosciuta").
+
+  Per avviare BeCity oggi (una delle due strade):
+    A) PRIMA di estrarre: tasto destro sullo ZIP → Proprietà → spunta
+       "Annulla blocco" (o "Sblocca") → OK, poi estrai. L'avviso non compare.
+    B) Sull'avviso: "Ulteriori informazioni" → "Esegui comunque".
+  Verifica che il file sia autentico: in PowerShell
+       Get-FileHash .\BeCity.exe
+  e confronta il valore con SHA256.txt (e con quello pubblicato su GitHub).
+
+  Se è attivo "Controllo intelligente delle app" (Smart App Control) di
+  Windows 11, i programmi non firmati vengono bloccati senza il pulsante
+  "Esegui comunque": serve la versione firmata (vedi sotto).
+
+  Soluzione definitiva: firma digitale dell'eseguibile. Il repository GitHub
+  compila BeCity.exe su Windows (Actions → "BeCity per Windows") e lo firma
+  automaticamente quando nei segreti del repository è presente un
+  certificato: Azure Trusted Signing oppure un certificato di firma del codice
+  in formato .pfx. Anche con la firma, nelle prime settimane SmartScreen può
+  ancora avvisare finché il programma non acquisisce reputazione; il nome
+  dell'editore però non risulta più "sconosciuto".
 
 AVVIO (Linux)
   chmod +x BeCity-linux && ./BeCity-linux
@@ -68,10 +75,8 @@ SICUREZZA
     altri siti aperte nel browser non possono leggere o modificare i dati.
   - Le formule (computo, calcolatore di campi GIS) sono valutate da un
     interprete sicuro: nessun codice viene eseguito.
-  - Il programma NON è firmato digitalmente: Windows SmartScreen può mostrare
-    "Windows ha protetto il PC" → "Ulteriori informazioni" → "Esegui comunque".
-    L'avviso sparisce solo firmando l'eseguibile con un certificato di firma
-    del codice. Per verificare l'integrità confronta l'impronta in SHA256.txt.
+  - Il programma non è ancora firmato digitalmente: vedi la sezione
+    AVVISO "PC PROTETTO DA WINDOWS".
 
 HOME
   Sei applicazioni. Pulsanti "Apri progetto" (scegli il progetto e l'applicazione) e
