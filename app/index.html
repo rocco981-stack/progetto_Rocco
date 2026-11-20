@@ -24,6 +24,7 @@
 (function () {
   var errs = [], B = window.__boot = { step: 'caricamento dei componenti', errs: errs, done: false };
   var tok = function () { var m = document.querySelector('meta[name="becity-token"]'); return m ? m.content : ''; };
+  try { if (tok()) fetch('api/heartbeat', { method: 'POST', headers: { 'X-BeCity-Token': tok() } }); } catch (x) { } // segnala al programma che la pagina è arrivata nella finestra
   function show(title) {
     if (B.done) return; var bt = document.getElementById('boot'); if (!bt) return; bt.classList.add('fail');
     document.getElementById('bootDiag').hidden = false; document.getElementById('bootErr').textContent = title;

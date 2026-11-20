@@ -1,6 +1,6 @@
 /* BeCity – core: stato, storage locale, i18n, router, UI comuni */
 'use strict';
-const App = window.App = { version: '3.2.0', modules: {}, routes: {}, state: null, user: null, bus: {}, undoMem: {} };
+const App = window.App = { version: '3.3.0', modules: {}, routes: {}, state: null, user: null, bus: {}, undoMem: {} };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

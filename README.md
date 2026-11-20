@@ -1,4 +1,4 @@
-# BeCity 3.2
+# BeCity 3.3
 
 Piattaforma locale per architettura, urbanistica e territorio: **CAD · GIS · BIM · Presentazione · Normativa · Contabilità**.
 Funziona sul proprio computer, senza installazione, senza Node.js e senza login. I dati restano in locale.

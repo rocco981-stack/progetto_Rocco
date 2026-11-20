@@ -1,4 +1,4 @@
-BeCity 3.2 – CAD · BIM · GIS · Presentazione · Normativa · Contabilità
+BeCity 3.3 – CAD · BIM · GIS · Presentazione · Normativa · Contabilità
 ======================================================================
 
 AVVIO (Windows)
@@ -41,6 +41,30 @@ AVVISO "PC PROTETTO DA WINDOWS" (SmartScreen)
   in formato .pfx. Anche con la firma, nelle prime settimane SmartScreen può
   ancora avvisare finché il programma non acquisisce reputazione; il nome
   dell'editore però non risulta più "sconosciuto".
+
+SE L'AVVIO NON RIESCE
+  - Se entro 25 secondi BeCity non compare nella finestra, il programma lo
+    rileva e chiede come proseguire:
+      Sì      = apre BeCity nel browser predefinito (scheda normale)
+      No      = riprova senza accelerazione grafica
+      Annulla = chiude BeCity
+  - La finestra di BeCity usa un profilo del browser dedicato (cartella
+    Documenti\BeCity\finestra), senza estensioni né impostazioni personali.
+  - All'avvio compare una schermata chiara con il logo e lo stato del
+    caricamento. Se qualcosa non va, compare il riquadro "Avvio non riuscito"
+    con i pulsanti: Riprova · Avvia in modalità sicura (dati dimostrativi, i
+    progetti su disco non vengono toccati) · Apri la cartella dei dati ·
+    Copia i dettagli (da inviare all'assistenza).
+  - I file di progetto danneggiati vengono ripristinati dalla copia .bak; un
+    progetto illeggibile viene escluso senza bloccare l'avvio.
+  - Registro degli eventi: Documenti\BeCity\becity.log (indica anche se la
+    finestra si è collegata al programma).
+  - Finestra nera o vuota (driver grafici): crea un collegamento a BeCity.exe
+    e aggiungi " --compat" in fondo al campo Destinazione.
+  - Se una versione precedente di BeCity è ancora aperta, la nuova si avvia
+    comunque su una porta diversa: chiudi la vecchia finestra.
+  - Se la cartella "app" manca accanto a BeCity.exe (ad esempio avvio
+    dall'interno dello ZIP) compare un messaggio di Windows che lo spiega.
 
 AVVIO (Linux)
   chmod +x BeCity-linux && ./BeCity-linux

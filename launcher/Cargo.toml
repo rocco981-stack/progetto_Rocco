@@ -1,6 +1,6 @@
 [package]
 name = "becity"
-version = "3.2.0"
+version = "3.3.0"
 edition = "2021"
 description = "BeCity – avvio locale della piattaforma (server statico, conversione DWG, PostGIS)"
 license = "LicenseRef-BeCity"

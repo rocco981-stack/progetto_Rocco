@@ -13,7 +13,8 @@ use std::sync::OnceLock;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 const PORT: u16 = 47800;
-const VERSION: &str = "3.2.0";
+const VERSION: &str = "3.3.0";
+static REQS: AtomicU64 = AtomicU64::new(0);
 static TOKEN: OnceLock<String> = OnceLock::new();
 static PORT_IN_USE: OnceLock<u16> = OnceLock::new();
 static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
@@ -54,6 +55,29 @@ fn log(msg: &str) {
     let p = log_path();
     if std::fs::metadata(&p).map(|m| m.len() > 2_000_000).unwrap_or(false) { let _ = std::fs::rename(&p, p.with_extension("log.old")); }
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) { let _ = writeln!(f, "[{}] {}", now(), msg.chars().take(4000).collect::<String>()); }
+}
+/// domanda nativa Sì/No/Annulla: restituisce 6 = Sì, 7 = No, 2 = Annulla
+fn ask(msg: &str) -> i32 {
+    log(msg);
+    #[cfg(windows)]
+    {
+        #[link(name = "user32")]
+        extern "system" { fn MessageBoxW(h: *mut core::ffi::c_void, text: *const u16, caption: *const u16, kind: u32) -> i32; }
+        let w = |s: &str| s.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>();
+        return unsafe { MessageBoxW(core::ptr::null_mut(), w(msg).as_ptr(), w("BeCity").as_ptr(), 0x3 | 0x30 | 0x10000 | 0x40000) };
+    }
+    #[cfg(not(windows))]
+    { eprintln!("{msg}"); 2 }
+}
+/// apre l'indirizzo nel browser predefinito (scheda normale)
+fn open_default(url: &str) {
+    log(&format!("apertura nel browser predefinito: {url}"));
+    #[cfg(windows)]
+    { let _ = std::process::Command::new("rundll32").args(["url.dll,FileProtocolHandler", url]).spawn(); }
+    #[cfg(target_os = "macos")]
+    { let _ = std::process::Command::new("open").arg(url).spawn(); }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    { let _ = std::process::Command::new("xdg-open").arg(url).spawn(); }
 }
 /// messaggio nativo di Windows (gli errori di avvio sono visibili anche senza finestra dell'applicazione)
 fn alert(msg: &str) {
@@ -225,6 +249,7 @@ fn dir_size(p: &Path) -> u64 { std::fs::read_dir(p).map(|rd| rd.flatten().map(|e
 
 /* ---------------- richiesta ---------------- */
 fn handle(mut req: Request, root: &Path, beat: &AtomicU64, seen: &AtomicBool) {
+    if REQS.fetch_add(1, Ordering::SeqCst) == 0 { log(&format!("prima richiesta dalla finestra: {} {}", req.url(), header(&req, "User-Agent").unwrap_or(""))); }
     let url = req.url().split('?').next().unwrap_or("/").to_string();
     let query = req.url().split('?').nth(1).unwrap_or("").to_string();
     let path = percent_decode(&url);
@@ -283,7 +308,9 @@ fn percent_decode(s: &str) -> String {
 
 /* ---------------- apertura finestra ---------------- */
 static COMPAT: OnceLock<bool> = OnceLock::new();
-fn open_window(url: &str) {
+fn open_window(url: &str) { open_window_mode(url, COMPAT.get().copied().unwrap_or(false)) }
+fn open_window_mode(url: &str, compat: bool) {
+    let _ = compat;
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -294,9 +321,11 @@ fn open_window(url: &str) {
         let cands = [format!("{pf86}\\Microsoft\\Edge\\Application\\msedge.exe"), format!("{pf}\\Microsoft\\Edge\\Application\\msedge.exe"), format!("{pf}\\Google\\Chrome\\Application\\chrome.exe"), format!("{pf86}\\Google\\Chrome\\Application\\chrome.exe"), format!("{local}\\Google\\Chrome\\Application\\chrome.exe")];
         for c in cands.iter() {
             if !Path::new(c).exists() { continue; }
-            let mut a: Vec<String> = vec![format!("--app={url}"), "--start-maximized".into(), "--no-first-run".into(), "--no-default-browser-check".into()];
-            if COMPAT.get().copied().unwrap_or(false) { a.push("--disable-gpu".into()); }
-            match std::process::Command::new(c).args(&a).spawn() { Ok(_) => { log(&format!("finestra aperta con {c}")); return; } Err(e) => log(&format!("avvio di {c} non riuscito: {e}")) }
+            let mut a: Vec<String> = vec![format!("--app={url}"), "--start-maximized".into(), "--no-first-run".into(), "--no-default-browser-check".into(), "--disable-extensions".into(), "--disable-sync".into()];
+            // profilo dedicato: la finestra di BeCity non dipende da estensioni, impostazioni o criteri del profilo personale
+            if let Some(d) = DATA_DIR.get() { a.push(format!("--user-data-dir={}", d.join("finestra").display())); }
+            if compat { a.push("--disable-gpu".into()); a.push("--disable-gpu-compositing".into()); }
+            match std::process::Command::new(c).args(&a).spawn() { Ok(_) => { log(&format!("finestra aperta con {c} {}", a.join(" "))); return; } Err(e) => log(&format!("avvio di {c} non riuscito: {e}")) }
         }
         log("Edge/Chrome non trovati: apertura con il browser predefinito");
         if std::process::Command::new("cmd").args(["/C", "start", "", url]).creation_flags(NO_WINDOW).spawn().is_err() { alert(&format!("Impossibile aprire il browser. Apri manualmente questo indirizzo:\n{url}")); }
@@ -353,6 +382,20 @@ fn main() {
     if !no_window { open_window(&url); }
     let beat = Arc::new(AtomicU64::new(now()));
     let seen = Arc::new(AtomicBool::new(false));
+    if !no_window {
+        // controllo: se la finestra non carica BeCity entro 25 secondi, propone un'alternativa invece di lasciare uno schermo nero
+        let (s, u) = (seen.clone(), url.clone());
+        std::thread::spawn(move || {
+            for tentativo in 0..2 {
+                for _ in 0..25 { std::thread::sleep(Duration::from_secs(1)); if s.load(Ordering::SeqCst) { return; } }
+                let n = REQS.load(Ordering::SeqCst);
+                let causa = if n == 0 { "La finestra non è riuscita a collegarsi a BeCity (nessuna richiesta ricevuta): può dipendere da criteri del browser, da un antivirus o da un proxy." } else { "La finestra si è collegata ma la pagina non è stata visualizzata: spesso dipende dall'accelerazione grafica o dai driver video." };
+                let r = ask(&format!("BeCity non è ancora comparso nella finestra.\n\n{causa}\n\nSì = apri BeCity nel browser predefinito\nNo = riprova senza accelerazione grafica\nAnnulla = chiudi BeCity\n\nIndirizzo: {u}\nRegistro: {}", log_path().display()));
+                if s.load(Ordering::SeqCst) { return; }
+                match r { 6 => { open_default(&u); return; } 7 if tentativo == 0 => { open_window_mode(&u, true); } 7 => { open_default(&u); return; } _ => { log("chiusura richiesta dall'utente"); std::process::exit(0); } }
+            }
+        });
+    }
     if !no_window {
         let (b, s) = (beat.clone(), seen.clone());
         std::thread::spawn(move || loop {
