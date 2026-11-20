@@ -1,6 +1,6 @@
 /* BeCity – core: stato, storage locale, i18n, router, UI comuni */
 'use strict';
-const App = window.App = { version: '3.1.0', modules: {}, routes: {}, state: null, user: null, bus: {}, undoMem: {} };
+const App = window.App = { version: '3.2.0', modules: {}, routes: {}, state: null, user: null, bus: {}, undoMem: {} };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -510,11 +510,14 @@ window.addEventListener('storage', e => { if (e.key === KEY && e.newValue) { try
 
 /* ---------------- start ---------------- */
 App.start = async () => {
-  const bm = t => { const m = document.getElementById('bootMsg'); if (m) m.textContent = t; };
-  bm('Apertura dell\'archivio locale…'); await App.store.init();
-  bm(App.store.mode === 'disk' ? 'Caricamento dei progetti dal disco…' : 'Caricamento dei progetti…'); await App.load();
-  if (App.bootError) setTimeout(() => App.toast(App.bootError, 'err'), 800);
-  if (!App.state.projects.length && App.seedDemo) App.seedDemo();
+  const B = window.__boot || {}; const bm = (t, step) => { B.step = step || t; const m = document.getElementById('bootMsg'); if (m) m.textContent = t; };
+  const v = document.getElementById('bootVer'); if (v) v.textContent = 'versione ' + App.version;
+  App.safeMode = /[?&]safe=1/.test(location.search);
+  bm('Apertura dell\'archivio locale…', 'apertura dell\'archivio locale'); await App.store.init();
+  bm(App.store.mode === 'disk' ? 'Caricamento dei progetti dal disco…' : 'Caricamento dei progetti…', 'caricamento dei progetti'); await App.load();
+  bm('Preparazione dell\'interfaccia…', 'preparazione dell\'interfaccia');
+  [App.bootError, App.bootWarn, App.store.recovered && App.store.recovered.length ? 'Alcuni file danneggiati sono stati ripristinati dalla copia di sicurezza: ' + App.store.recovered.join(', ') : ''].filter(Boolean).forEach((m, i) => setTimeout(() => App.toast(m, 'warn'), 900 + i * 400));
+  if (!App.state.projects.length && App.seedDemo) { try { App.seedDemo(); } catch (e) { console.error('dati dimostrativi', e); } }
   App.user = App.state.users.find(u => u.role === 'admin') || App.state.users[0];
   if (!App.state.currentProject && App.state.projects[0]) App.state.currentProject = App.state.projects[0].id;
   App.renderTopbar(); App.applyI18n();
@@ -526,10 +529,14 @@ App.start = async () => {
   document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); App.palette(); } });
   // collegamento con BeCity.exe: mantiene attivo il server locale finché la finestra è aperta
   const beat = () => fetch('api/heartbeat', { method: 'POST' }).then(r => r.ok && r.json()).then(j => { App.launcher = !!(j && j.ok); }).catch(() => { App.launcher = false; });
-  if (location.protocol.startsWith('http') && App.store.mode === 'disk') { beat(); setInterval(beat, 15000); }
+  if (location.protocol.startsWith('http') && document.querySelector('meta[name="becity-token"]') && document.querySelector('meta[name="becity-token"]').content) { beat(); setInterval(beat, 15000); }
+  window.addEventListener('error', ev => { if (ev.message && App.store.mode === 'disk') fetch('api/log', { method: 'POST', body: 'ERRORE ' + ev.message + ' ' + (ev.filename || '').split('/').pop() + ':' + ev.lineno }).catch(() => { }); });
   window.addEventListener('beforeunload', () => App.saveNow(true));
   window.addEventListener('dragover', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });
   window.addEventListener('drop', e => { if (!e.target.closest || !e.target.closest('[data-drop]')) e.preventDefault(); });
-  App.route();
-  const boot = document.getElementById('boot'); if (boot) { boot.classList.add('done'); setTimeout(() => boot.remove(), 600); }
+  bm('Apertura della schermata iniziale…', 'apertura della schermata iniziale');
+  try { App.route(); } catch (e) { console.error(e); location.hash = '#/home'; App.route(); }
+  if (App.safeMode) { const tb = document.querySelector('.topbar'); if (tb) tb.insertAdjacentHTML('beforeend', '<span class="pill warn" title="I dati salvati non sono stati caricati">Modalità sicura</span>'); }
+  B.done = true;
+  const boot = document.getElementById('boot'); if (boot && !boot.classList.contains('fail')) { boot.classList.add('done'); setTimeout(() => boot.remove(), 500); }
 };

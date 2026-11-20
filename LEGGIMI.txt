@@ -1,4 +1,4 @@
-BeCity 3.1 – CAD · BIM · GIS · Presentazione · Normativa · Contabilità
+BeCity 3.2 – CAD · BIM · GIS · Presentazione · Normativa · Contabilità
 ======================================================================
 
 AVVIO (Windows)
@@ -18,6 +18,23 @@ AVVIO (Windows)
   SmartScreen può mostrare "Windows ha protetto il PC". Clicca
   "Ulteriori informazioni" → "Esegui comunque".
 
+SE L'AVVIO NON RIESCE
+  - All'avvio compare una schermata chiara con il logo e lo stato del
+    caricamento. Se qualcosa non va, compare un riquadro "Avvio non riuscito"
+    con i dettagli e i pulsanti: Riprova · Avvia in modalità sicura (dati
+    dimostrativi, i progetti su disco non vengono toccati) · Apri la cartella
+    dei dati · Copia i dettagli (da inviare all'assistenza).
+  - I file di progetto danneggiati vengono ripristinati automaticamente dalla
+    copia .bak; un progetto illeggibile viene escluso senza bloccare l'avvio.
+  - Registro degli eventi: Documenti\BeCity\becity.log
+  - Finestra nera o vuota (driver grafici): crea un collegamento a BeCity.exe
+    e aggiungi " --compat" in fondo al campo Destinazione (disattiva
+    l'accelerazione grafica della finestra).
+  - Se una versione precedente di BeCity è ancora aperta, la nuova versione
+    si avvia comunque su una porta diversa: chiudi la vecchia finestra.
+  - Se la cartella "app" manca accanto a BeCity.exe (ad esempio avvio
+    dall'interno dello ZIP) compare un messaggio di Windows che lo spiega.
+
 AVVIO (Linux)
   chmod +x BeCity-linux && ./BeCity-linux
 
@@ -28,6 +45,7 @@ AVVIO (macOS)
 
 OPZIONI DI BeCity.exe
   --server     avvia solo il server (http://127.0.0.1:47800) senza aprire finestre
+  --compat     apre la finestra senza accelerazione grafica (schermo nero/vuoto)
   (se la porta 47800 è occupata usa automaticamente la successiva libera)
 
 DATI (archivio locale su disco)

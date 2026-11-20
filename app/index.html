@@ -18,7 +18,27 @@
 </script>
 </head>
 <body>
-<div id="boot" role="status" aria-live="polite"><div class="boot-card"><svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a6cff"/><path d="M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20" fill="#fff"/></svg><div class="boot-name">Be<b>City</b></div><div class="boot-sub">CAD · GIS · BIM · Presentazione · Normativa · Contabilità</div><div class="boot-bar"><i></i></div><div class="boot-msg" id="bootMsg">Avvio in corso…</div></div></div>
+<div id="boot" role="status" aria-live="polite"><div class="boot-card"><svg viewBox="0 0 48 48" width="72" height="72" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a6cff"/><path d="M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20" fill="#fff"/></svg><div class="boot-name">Be<b>City</b></div><div class="boot-sub">CAD · GIS · BIM · Presentazione · Normativa · Contabilità</div><div class="boot-bar"><i></i></div><div class="boot-msg" id="bootMsg">Caricamento dei componenti…</div><div class="boot-ver" id="bootVer"></div>
+<div class="boot-diag" id="bootDiag" hidden><b id="bootErr"></b><pre id="bootDet"></pre><div class="boot-acts"><button type="button" onclick="location.reload()">Riprova</button><button type="button" onclick="location.href=location.pathname+'?safe=1'">Avvia in modalità sicura</button><button type="button" id="bootDir">Apri la cartella dei dati</button><button type="button" id="bootCopy">Copia i dettagli</button><button type="button" onclick="document.getElementById('boot').remove()">Continua comunque</button></div><small>La modalità sicura avvia BeCity con i dati dimostrativi senza modificare i progetti salvati su disco.</small></div></div></div>
+<script>
+(function () {
+  var errs = [], B = window.__boot = { step: 'caricamento dei componenti', errs: errs, done: false };
+  var tok = function () { var m = document.querySelector('meta[name="becity-token"]'); return m ? m.content : ''; };
+  function show(title) {
+    if (B.done) return; var bt = document.getElementById('boot'); if (!bt) return; bt.classList.add('fail');
+    document.getElementById('bootDiag').hidden = false; document.getElementById('bootErr').textContent = title;
+    document.getElementById('bootDet').textContent = 'Fase: ' + B.step + (errs.length ? '\n' + errs.join('\n') : '') + '\n' + navigator.userAgent;
+  }
+  B.fail = function (e) { var m = String(e && (e.stack || e.message) || e).split('\n').slice(0, 3).join(' '); errs.push(m); show('Avvio non riuscito'); try { fetch('api/log', { method: 'POST', headers: { 'X-BeCity-Token': tok() }, body: 'AVVIO [' + B.step + '] ' + m }); } catch (x) { } };
+  window.addEventListener('error', function (ev) { if (B.done) return; var t = ev.target; if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) B.fail('Componente non caricato: ' + (t.src || t.href)); else if (ev.message) B.fail(ev.message + (ev.filename ? ' (' + ev.filename.split('/').pop() + ':' + ev.lineno + ')' : '')); }, true);
+  window.addEventListener('unhandledrejection', function (ev) { if (!B.done) B.fail(ev.reason); });
+  setTimeout(function () { if (!B.done) show('L\'avvio sta impiegando troppo tempo'); }, 20000);
+  document.addEventListener('click', function (ev) {
+    if (ev.target.id === 'bootDir') fetch('api/open-data-dir', { method: 'POST', headers: { 'X-BeCity-Token': tok() } });
+    if (ev.target.id === 'bootCopy') { var t = document.getElementById('bootErr').textContent + '\n' + document.getElementById('bootDet').textContent; if (navigator.clipboard) navigator.clipboard.writeText(t); ev.target.textContent = 'Copiato'; }
+  });
+})();
+</script></div>
 <header class="topbar" id="topbar">
   <a class="brand" href="#/home" aria-label="BeCity – home">
     <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#0a6cff"/><path d="M11 37V21h7v16M20.5 37V11h7v26M30 37V17h7v20" fill="#fff"/></svg>
@@ -62,6 +82,6 @@
   <script src="js/acc-demo.js"></script>
   <script src="js/acc.js"></script>
 <script src="js/admin.js"></script>
-<script>App.start().catch(function (e) { var m = document.getElementById("bootMsg"); if (m) m.textContent = "Errore di avvio: " + e.message; console.error(e); });</script>
+<script>try { App.start().catch(window.__boot.fail); } catch (e) { window.__boot.fail(e); }</script>
 </body>
 </html>

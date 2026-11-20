@@ -13,7 +13,7 @@ use std::sync::OnceLock;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 const PORT: u16 = 47800;
-const VERSION: &str = "3.1.0";
+const VERSION: &str = "3.2.0";
 static TOKEN: OnceLock<String> = OnceLock::new();
 static PORT_IN_USE: OnceLock<u16> = OnceLock::new();
 static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
@@ -49,9 +49,24 @@ fn app_root() -> PathBuf {
     exe
 }
 
+fn log_path() -> PathBuf { DATA_DIR.get().map(|d| d.join("becity.log")).unwrap_or_else(|| std::env::temp_dir().join("becity.log")) }
 fn log(msg: &str) {
-    let p = std::env::temp_dir().join("becity.log");
-    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) { let _ = writeln!(f, "[{}] {}", now(), msg); }
+    let p = log_path();
+    if std::fs::metadata(&p).map(|m| m.len() > 2_000_000).unwrap_or(false) { let _ = std::fs::rename(&p, p.with_extension("log.old")); }
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) { let _ = writeln!(f, "[{}] {}", now(), msg.chars().take(4000).collect::<String>()); }
+}
+/// messaggio nativo di Windows (gli errori di avvio sono visibili anche senza finestra dell'applicazione)
+fn alert(msg: &str) {
+    log(msg);
+    #[cfg(windows)]
+    {
+        #[link(name = "user32")]
+        extern "system" { fn MessageBoxW(h: *mut core::ffi::c_void, text: *const u16, caption: *const u16, kind: u32) -> i32; }
+        let w = |s: &str| s.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>();
+        unsafe { MessageBoxW(core::ptr::null_mut(), w(msg).as_ptr(), w("BeCity").as_ptr(), 0x10); }
+    }
+    #[cfg(not(windows))]
+    eprintln!("{msg}");
 }
 
 fn mime(p: &Path) -> &'static str {
@@ -225,14 +240,15 @@ fn handle(mut req: Request, root: &Path, beat: &AtomicU64, seen: &AtomicBool) {
             let (ns, key) = rest.split_once('/').unwrap_or((rest, ""));
             return match (method, key.is_empty()) {
                 (Method::Get, true) => match store_list(ns) { Ok(v) => json(req, 200, v), Err(e) => json(req, 400, serde_json::json!({"error": e})) },
-                (Method::Get, false) => match store_path(ns, key).map(std::fs::read) { Some(Ok(d)) => bytes(req, d, "application/octet-stream"), Some(Err(_)) => json(req, 404, serde_json::json!({"error": "non trovato"})), None => json(req, 400, serde_json::json!({"error": "chiave non valida"})) },
+                (Method::Get, false) => match store_path(ns, key).map(|p| if query.contains("bak=1") { p.with_extension("bak") } else { p }).map(std::fs::read) { Some(Ok(d)) => bytes(req, d, "application/octet-stream"), Some(Err(_)) => json(req, 404, serde_json::json!({"error": "non trovato"})), None => json(req, 400, serde_json::json!({"error": "chiave non valida"})) },
                 (Method::Put, false) => match store_put(ns, key, &body) { Ok(_) => json(req, 200, serde_json::json!({"ok": true, "size": body.len()})), Err(e) => json(req, 500, serde_json::json!({"error": e})) },
                 (Method::Delete, false) => { if let Some(p) = store_path(ns, key) { let _ = std::fs::remove_file(p); } json(req, 200, serde_json::json!({"ok": true})) }
                 _ => json(req, 405, serde_json::json!({"error": "metodo non consentito"})),
             };
         }
         match path.as_str() {
-            "/api/store-info" => { let d = DATA_DIR.get().cloned().unwrap_or_default(); return json(req, 200, serde_json::json!({"ok": true, "dir": d.display().to_string(), "size": dir_size(&d), "version": VERSION, "dwg": true, "postgis": true, "launcher": true})); }
+            "/api/log" => { log(&format!("pagina: {}", String::from_utf8_lossy(&body))); return json(req, 200, serde_json::json!({"ok": true})); }
+            "/api/store-info" => { let d = DATA_DIR.get().cloned().unwrap_or_default(); return json(req, 200, serde_json::json!({"ok": true, "dir": d.display().to_string(), "size": dir_size(&d.join("progetti")) + dir_size(&d.join("file")) + dir_size(&d.join("prezzari")) + dir_size(&d.join("stato")), "log": log_path().display().to_string(), "version": VERSION, "dwg": true, "postgis": true, "launcher": true})); }
             "/api/open-data-dir" => { if let Some(d) = DATA_DIR.get() { let _ = std::fs::create_dir_all(d); #[cfg(windows)] { let _ = std::process::Command::new("explorer").arg(d).spawn(); } #[cfg(target_os = "macos")] { let _ = std::process::Command::new("open").arg(d).spawn(); } #[cfg(all(unix, not(target_os = "macos")))] { let _ = std::process::Command::new("xdg-open").arg(d).spawn(); } } return json(req, 200, serde_json::json!({"ok": true})); }
             "/api/heartbeat" => { beat.store(now(), Ordering::SeqCst); seen.store(true, Ordering::SeqCst); return json(req, 200, serde_json::json!({"ok": true})); }
             "/api/quit" => { json(req, 200, serde_json::json!({"ok": true})); std::thread::spawn(|| { std::thread::sleep(Duration::from_millis(300)); std::process::exit(0); }); return; }
@@ -254,7 +270,7 @@ fn handle(mut req: Request, root: &Path, beat: &AtomicU64, seen: &AtomicBool) {
     match std::fs::read(&f) {
         Ok(mut d) => {
             if rel == "index.html" { let t = TOKEN.get().cloned().unwrap_or_default(); d = String::from_utf8_lossy(&d).replace("<meta name=\"becity-token\" content=\"\">", &format!("<meta name=\"becity-token\" content=\"{t}\">")).into_bytes(); }
-            let _ = req.respond(secure(Response::from_data(d).with_header(hdr("Content-Type", mime(&f))).with_header(hdr("Cache-Control", "no-cache"))));
+            let _ = req.respond(secure(Response::from_data(d).with_header(hdr("Content-Type", mime(&f))).with_header(hdr("Cache-Control", "no-store"))));
         }
         Err(_) => { let _ = req.respond(Response::from_string("Non trovato").with_status_code(404)); }
     }
@@ -266,6 +282,7 @@ fn percent_decode(s: &str) -> String {
 }
 
 /* ---------------- apertura finestra ---------------- */
+static COMPAT: OnceLock<bool> = OnceLock::new();
 fn open_window(url: &str) {
     #[cfg(windows)]
     {
@@ -276,9 +293,13 @@ fn open_window(url: &str) {
         let local = std::env::var("LOCALAPPDATA").unwrap_or_default();
         let cands = [format!("{pf86}\\Microsoft\\Edge\\Application\\msedge.exe"), format!("{pf}\\Microsoft\\Edge\\Application\\msedge.exe"), format!("{pf}\\Google\\Chrome\\Application\\chrome.exe"), format!("{pf86}\\Google\\Chrome\\Application\\chrome.exe"), format!("{local}\\Google\\Chrome\\Application\\chrome.exe")];
         for c in cands.iter() {
-            if Path::new(c).exists() && std::process::Command::new(c).args([&format!("--app={url}"), "--window-size=1600,1000", "--start-maximized", "--no-first-run", "--no-default-browser-check"]).spawn().is_ok() { return; }
+            if !Path::new(c).exists() { continue; }
+            let mut a: Vec<String> = vec![format!("--app={url}"), "--start-maximized".into(), "--no-first-run".into(), "--no-default-browser-check".into()];
+            if COMPAT.get().copied().unwrap_or(false) { a.push("--disable-gpu".into()); }
+            match std::process::Command::new(c).args(&a).spawn() { Ok(_) => { log(&format!("finestra aperta con {c}")); return; } Err(e) => log(&format!("avvio di {c} non riuscito: {e}")) }
         }
-        let _ = std::process::Command::new("cmd").args(["/C", "start", "", url]).creation_flags(NO_WINDOW).spawn();
+        log("Edge/Chrome non trovati: apertura con il browser predefinito");
+        if std::process::Command::new("cmd").args(["/C", "start", "", url]).creation_flags(NO_WINDOW).spawn().is_err() { alert(&format!("Impossibile aprire il browser. Apri manualmente questo indirizzo:\n{url}")); }
     }
     #[cfg(target_os = "macos")]
     { let _ = std::process::Command::new("open").arg(url).spawn(); }
@@ -295,7 +316,7 @@ fn already_running(port: u16) -> bool {
         let _ = s.set_read_timeout(Some(Duration::from_secs(2)));
         let _ = s.write_all(format!("GET /api/status HTTP/1.0\r\nHost: 127.0.0.1:{port}\r\n\r\n").as_bytes());
         let mut buf = String::new(); let _ = s.read_to_string(&mut buf);
-        return buf.contains("BeCity");
+        return buf.contains("BeCity") && buf.contains(&format!("\"version\":\"{VERSION}\""));
     }
     false
 }
@@ -304,21 +325,28 @@ fn main() {
     let root = app_root();
     let args: Vec<String> = std::env::args().collect();
     let no_window = args.iter().any(|a| a == "--server");
+    let _ = COMPAT.set(args.iter().any(|a| a == "--compat"));
+    if !root.join("index.html").exists() || !root.join("js").join("core.js").exists() {
+        alert(&format!("La cartella \"app\" di BeCity non è stata trovata accanto al programma ({}).\n\nEstrai tutto il contenuto dello ZIP in una cartella e avvia BeCity.exe da lì (non direttamente dall'interno dello ZIP).", root.display()));
+        return;
+    }
     let mut port = PORT;
     let server = loop {
         match Server::http(("127.0.0.1", port)) {
             Ok(s) => break s,
             Err(_) => {
-                if already_running(port) { open_window(&format!("http://127.0.0.1:{port}/")); return; }
+                if already_running(port) { let _ = DATA_DIR.set(data_dir()); log(&format!("BeCity {VERSION} già in esecuzione sulla porta {port}: apro una nuova finestra")); open_window(&format!("http://127.0.0.1:{port}/?v={VERSION}")); return; }
                 port += 1; if port > PORT + 20 { log("nessuna porta disponibile"); return; }
             }
         }
     };
     let _ = PORT_IN_USE.set(port);
     let _ = TOKEN.set(make_token());
-    let dd = data_dir(); let _ = std::fs::create_dir_all(&dd); for ns in NAMESPACES { let _ = std::fs::create_dir_all(dd.join(ns)); }
+    let dd = data_dir();
+    if let Err(e) = std::fs::create_dir_all(&dd) { alert(&format!("Impossibile creare la cartella dei dati {}: {e}.\n\nSe è attiva la protezione \"Accesso controllato alle cartelle\" di Windows, consenti BeCity.exe oppure crea una cartella \"dati\" accanto a BeCity.exe.", dd.display())); }
+    for ns in NAMESPACES { let _ = std::fs::create_dir_all(dd.join(ns)); }
     let _ = DATA_DIR.set(dd);
-    let url = format!("http://127.0.0.1:{port}/");
+    let url = format!("http://127.0.0.1:{port}/?v={VERSION}");
     log(&format!("BeCity {VERSION} avviato su {url} – programma {} – dati {}", root.display(), DATA_DIR.get().map(|d| d.display().to_string()).unwrap_or_default()));
     #[cfg(not(windows))]
     println!("BeCity {VERSION} in esecuzione su {url}  (Ctrl+C per terminare)");

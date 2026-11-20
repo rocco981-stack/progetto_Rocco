@@ -1,4 +1,4 @@
-# BeCity 3.1
+# BeCity 3.2
 
 Piattaforma locale per architettura, urbanistica e territorio: **CAD · GIS · BIM · Presentazione · Normativa · Contabilità**.
 Funziona sul proprio computer, senza installazione, senza Node.js e senza login. I dati restano in locale.
@@ -11,6 +11,8 @@ Funziona sul proprio computer, senza installazione, senza Node.js e senza login.
 
 L'eseguibile non è firmato digitalmente: al primo avvio Windows SmartScreen può mostrare
 “Windows ha protetto il PC” → “Ulteriori informazioni” → “Esegui comunque”. Le impronte SHA-256 sono in `SHA256.txt`.
+
+Se l'avvio non riesce compare un riquadro con i dettagli e la **modalità sicura**; il registro è in `Documenti\BeCity\becity.log`. Per finestre nere o vuote (driver grafici) avvia `BeCity.exe --compat`.
 
 - Linux: `chmod +x BeCity-linux && ./BeCity-linux`
 - macOS: `avvia-mac.command` (python3; senza conversione DWG e PostGIS)

@@ -618,16 +618,27 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .prm-status{display:flex;align-items:center;gap:18px;padding:6px 14px;background:#1f3b63;color:#c9d6e8;font-size:12px;flex:none;overflow-x:auto;white-space:nowrap}
 .prm-status b{color:#fff;font-variant-numeric:tabular-nums} .prm-status .hi b{color:#ffd166} .prm-status .faint{color:#8fa3bf}
 
-/* ---------- schermata di avvio ---------- */
-#boot{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(900px 500px at 70% 30%,#13284d,#07080b 70%);color:#fff;transition:opacity .5s ease}
+/* ---------- schermata di avvio (chiara) ---------- */
+#boot{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f7f9fc,#e9eef5);color:#1f2833;transition:opacity .45s ease;padding:20px}
 #boot.done{opacity:0;pointer-events:none}
-.boot-card{display:flex;flex-direction:column;align-items:center;gap:10px;animation:hin .6s ease both}
-.boot-name{font:700 34px var(--display);letter-spacing:-.02em} .boot-name b{color:#3b8cff}
-.boot-sub{font-size:13px;color:#9aa6b8;letter-spacing:.04em}
-.boot-bar{width:260px;height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;margin-top:18px}
-.boot-bar i{display:block;width:40%;height:100%;background:#3b8cff;animation:bootbar 1.1s ease-in-out infinite}
+.boot-card{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:760px;width:100%}
+.boot-card svg{filter:drop-shadow(0 8px 18px rgba(10,108,255,.28))}
+.boot-name{font:700 36px "Segoe UI",system-ui,sans-serif;letter-spacing:-.02em;color:#000} .boot-name b{color:#0a6cff}
+.boot-sub{font-size:13px;color:#5f6b78;letter-spacing:.03em;text-align:center}
+.boot-bar{width:280px;height:4px;background:#d9e2ee;border-radius:2px;overflow:hidden;margin-top:18px}
+.boot-bar i{display:block;width:40%;height:100%;background:#0a6cff;border-radius:2px;animation:bootbar 1.1s ease-in-out infinite}
 @keyframes bootbar{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
-.boot-msg{font-size:12px;color:#c9d2df;min-height:16px}
+.boot-msg{font-size:13px;color:#3a4350;min-height:18px}
+.boot-ver{font-size:11px;color:#8c97a5}
+#boot.fail .boot-bar{display:none}
+.boot-diag{margin-top:14px;background:#fff;border:1px solid #f0b8bf;border-left:4px solid #d1242f;border-radius:6px;padding:14px 16px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.08);font:13px "Segoe UI",system-ui,sans-serif}
+.boot-diag b{color:#a3121c;font-size:15px}
+.boot-diag pre{white-space:pre-wrap;word-break:break-word;background:#f7f8fa;border-radius:4px;padding:8px;font:11.5px Consolas,monospace;max-height:180px;overflow:auto;margin:8px 0}
+.boot-acts{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.boot-acts button{border:1px solid #c7ccd3;background:#fff;border-radius:4px;padding:6px 12px;cursor:pointer;font:inherit}
+.boot-acts button:first-child{background:#0a6cff;border-color:#0a6cff;color:#fff}
+.boot-acts button:hover{border-color:#000}
+.boot-diag small{color:#5f6b78}
 
 /* ---------- card applicazioni: rettangolari, centrate, griglia ordinata ---------- */
 .apps-sec{display:flex;flex-direction:column;align-items:center}
